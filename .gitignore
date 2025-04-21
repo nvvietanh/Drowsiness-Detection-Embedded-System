@@ -42,8 +42,9 @@ server/venv/
 server/__pycache__/
 server/.env
 server/*.pyc
+server/yolov8n.pt
 
-# === DNN (zip và dataset) ===
+# === DNN ===
 dnn/*.zip
 dnn/dataset/
 dnn/__pycache__/
