@@ -1,0 +1,57 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# ---------
+# ReactJS
+# ---------
+# dependencies
+/node_modules
+/.pnp
+.pnp.js
+
+# testing
+/coverage
+
+# production
+/build
+
+# misc
+.DS_Store
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# === Global ignores ===
+*.pyc
+__pycache__/
+.DS_Store
+*.log
+
+# === ReactJS (client/) ===
+client/node_modules/
+client/build/
+client/.env
+client/.env.*
+
+# === Flask + venv (server/) ===
+server/venv/
+server/__pycache__/
+server/.env
+server/*.pyc
+
+# === DNN (zip và dataset) ===
+dnn/*.zip
+dnn/dataset/
+dnn/__pycache__/
+
+# === Jupyter notebooks checkpoints ===
+.ipynb_checkpoints/
+
+# === VSCode/IDE ===
+.vscode/
+.idea/
+
