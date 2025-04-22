@@ -49,7 +49,17 @@ dnn/Driver Drowsiness Dataset (DDD)/
 dnn/Driver Drowsiness Dataset (DDD)_1/
 dnn/*.zip
 dnn/dataset/
+dnn/datasets/
 dnn/__pycache__/
+
+dnn1/Driver Drowsiness Dataset (DDD)/
+dnn1/Driver Drowsiness Dataset (DDD)_1/
+dnn1/*.zip
+dnn1/dataset/
+dnn1/datasets/
+dnn1/__pycache__/
+dnn1/venv/
+dnn1/mobilenetv2.h5
 
 # === Jupyter notebooks checkpoints ===
 .ipynb_checkpoints/

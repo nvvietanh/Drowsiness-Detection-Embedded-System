@@ -3,7 +3,9 @@
 # -----------------------------------
 from flask import Flask, Response
 from mqtt_client import connect_mqtt
-from yolo_stream import generate_frames
+from server.stream import generate_frames
+from models.mediapipe import mediapipe_detector_stream, dlib_detector_stream
+# -----------------------------------
 
 # -----------------------------------
 # Global variables declarations
@@ -43,8 +45,9 @@ def index():
 
 @app.route('/video_feed')
 def video_feed():
-    return Response(generate_frames(),
-                    mimetype='multipart/x-mixed-replace; boundary=frame')
+    return Response(
+        generate_frames(0),
+        mimetype='multipart/x-mixed-replace; boundary=frame')
 
 if __name__ == '__main__':
     connect_mqtt()
