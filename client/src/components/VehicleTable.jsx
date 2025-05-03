@@ -1,13 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './VehicleTable.css';
 
 const VehicleTable = () => {
-  const [vehicles, setVehicles] = useState([
-    { vehicle_id: 1, license_plate: '29A-12345', vehicle_type: 'Xe tải' },
-    { vehicle_id: 2, license_plate: '51H-67890', vehicle_type: 'Xe khách' },
-    { vehicle_id: 3, license_plate: '30F-45678', vehicle_type: 'Xe container' },
-  ]);
-
+  const [vehicles, setVehicles] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [currentVehicle, setCurrentVehicle] = useState(null);
@@ -16,6 +11,26 @@ const VehicleTable = () => {
     license_plate: '',
     vehicle_type: '',
   });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  // Lấy dữ liệu từ API khi component mount
+  useEffect(() => {
+    const fetchVehicles = async () => {
+      try {
+        const response = await fetch('http://localhost:5000/api/vehicles');
+        if (!response.ok) throw new Error('Failed to fetch vehicles');
+        const data = await response.json();
+        setVehicles(data);
+      } catch (err) {
+        setVehicles([]);
+        setError('Không có dữ liệu');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchVehicles();
+  }, []);
 
   const handleAddClick = () => {
     setIsModalOpen(true);
@@ -30,9 +45,17 @@ const VehicleTable = () => {
     setFormData(vehicle);
   };
 
-  const handleDeleteClick = (vehicle_id) => {
+  const handleDeleteClick = async (vehicle_id) => {
     if (window.confirm('Bạn có chắc chắn muốn xóa xe này?')) {
-      setVehicles(vehicles.filter((vehicle) => vehicle.vehicle_id !== vehicle_id));
+      try {
+        const response = await fetch(`http://localhost:5000/api/vehicles/${vehicle_id}`, {
+          method: 'DELETE',
+        });
+        if (!response.ok) throw new Error('Failed to delete vehicle');
+        setVehicles(vehicles.filter((vehicle) => vehicle.vehicle_id !== vehicle_id));
+      } catch (err) {
+        setError(err.message);
+      }
     }
   };
 
@@ -41,23 +64,39 @@ const VehicleTable = () => {
     setFormData({ ...formData, [name]: value });
   };
 
-  const handleFormSubmit = (e) => {
+  const handleFormSubmit = async (e) => {
     e.preventDefault();
-    if (isEditMode) {
-      setVehicles(
-        vehicles.map((vehicle) =>
-          vehicle.vehicle_id === currentVehicle.vehicle_id ? { ...formData } : vehicle
-        )
-      );
-    } else {
-      setVehicles([...vehicles, { ...formData, vehicle_id: vehicles.length + 1 }]);
+    try {
+      if (isEditMode) {
+        const response = await fetch(`http://localhost:5000/api/vehicles/${currentVehicle.vehicle_id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(formData),
+        });
+        if (!response.ok) throw new Error('Failed to update vehicle');
+        const updatedVehicle = await response.json();
+        setVehicles(vehicles.map((vehicle) => (vehicle.vehicle_id === currentVehicle.vehicle_id ? updatedVehicle : vehicle)));
+      } else {
+        const response = await fetch('http://localhost:5000/api/vehicles', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(formData),
+        });
+        if (!response.ok) throw new Error('Failed to add vehicle');
+        const newVehicle = await response.json();
+        setVehicles([...vehicles, newVehicle]);
+      }
+      setIsModalOpen(false);
+    } catch (err) {
+      setError(err.message);
     }
-    setIsModalOpen(false);
   };
 
   const handleModalClose = () => {
     setIsModalOpen(false);
   };
+
+  if (loading) return <div className="table-container">Đang tải...</div>;
 
   return (
     <div className="table-container">
@@ -76,27 +115,35 @@ const VehicleTable = () => {
             </tr>
           </thead>
           <tbody>
-            {vehicles.map((vehicle) => (
-              <tr key={vehicle.vehicle_id}>
-                <td>{vehicle.vehicle_id}</td>
-                <td>{vehicle.license_plate}</td>
-                <td>{vehicle.vehicle_type}</td>
-                <td>
-                  <button
-                    className="action-btn edit-btn"
-                    onClick={() => handleEditClick(vehicle)}
-                  >
-                    Sửa
-                  </button>
-                  <button
-                    className="action-btn delete-btn"
-                    onClick={() => handleDeleteClick(vehicle.vehicle_id)}
-                  >
-                    Xóa
-                  </button>
+            {vehicles.length === 0 && error ? (
+              <tr>
+                <td colSpan="4" style={{ textAlign: 'center', padding: '20px' }}>
+                  {error}
                 </td>
               </tr>
-            ))}
+            ) : (
+              vehicles.map((vehicle) => (
+                <tr key={vehicle.vehicle_id}>
+                  <td>{vehicle.vehicle_id}</td>
+                  <td>{vehicle.license_plate}</td>
+                  <td>{vehicle.vehicle_type}</td>
+                  <td>
+                    <button
+                      className="action-btn edit-btn"
+                      onClick={() => handleEditClick(vehicle)}
+                    >
+                      Sửa
+                    </button>
+                    <button
+                      className="action-btn delete-btn"
+                      onClick={() => handleDeleteClick(vehicle.vehicle_id)}
+                    >
+                      Xóa
+                    </button>
+                  </td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>

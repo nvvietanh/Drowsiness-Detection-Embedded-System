@@ -1,13 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './DriverTable.css';
 
 const DriverTable = () => {
-  const [drivers, setDrivers] = useState([
-    { driver_id: 1, name: 'Nguyễn Văn A', address: '123 Đường Láng, Hà Nội', image_url: 'url1', image_emb: [], phone_number: '0123456789' },
-    { driver_id: 2, name: 'Trần Thị B', address: '456 Nguyễn Trãi, TP.HCM', image_url: 'url2', image_emb: [], phone_number: '0987654321' },
-    { driver_id: 3, name: 'Lê Văn C', address: '789 Lê Lợi, Đà Nẵng', image_url: 'url3', image_emb: [], phone_number: '0912345678' },
-  ]);
-
+  const [drivers, setDrivers] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [currentDriver, setCurrentDriver] = useState(null);
@@ -19,6 +14,26 @@ const DriverTable = () => {
     image_emb: [],
     phone_number: '',
   });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  // Lấy dữ liệu từ API khi component mount
+  useEffect(() => {
+    const fetchDrivers = async () => {
+      try {
+        const response = await fetch('http://localhost:5000/api/drivers');
+        if (!response.ok) throw new Error('Failed to fetch drivers');
+        const data = await response.json();
+        setDrivers(data);
+      } catch (err) {
+        setDrivers([]);
+        setError('Không có dữ liệu');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchDrivers();
+  }, []);
 
   const handleAddClick = () => {
     setIsModalOpen(true);
@@ -33,9 +48,17 @@ const DriverTable = () => {
     setFormData(driver);
   };
 
-  const handleDeleteClick = (driver_id) => {
+  const handleDeleteClick = async (driver_id) => {
     if (window.confirm('Bạn có chắc chắn muốn xóa tài xế này?')) {
-      setDrivers(drivers.filter((driver) => driver.driver_id !== driver_id));
+      try {
+        const response = await fetch(`http://localhost:5000/api/drivers/${driver_id}`, {
+          method: 'DELETE',
+        });
+        if (!response.ok) throw new Error('Failed to delete driver');
+        setDrivers(drivers.filter((driver) => driver.driver_id !== driver_id));
+      } catch (err) {
+        setError(err.message);
+      }
     }
   };
 
@@ -44,23 +67,39 @@ const DriverTable = () => {
     setFormData({ ...formData, [name]: value });
   };
 
-  const handleFormSubmit = (e) => {
+  const handleFormSubmit = async (e) => {
     e.preventDefault();
-    if (isEditMode) {
-      setDrivers(
-        drivers.map((driver) =>
-          driver.driver_id === currentDriver.driver_id ? { ...formData } : driver
-        )
-      );
-    } else {
-      setDrivers([...drivers, { ...formData, driver_id: drivers.length + 1, image_emb: [] }]);
+    try {
+      if (isEditMode) {
+        const response = await fetch(`http://localhost:5000/api/drivers/${currentDriver.driver_id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(formData),
+        });
+        if (!response.ok) throw new Error('Failed to update driver');
+        const updatedDriver = await response.json();
+        setDrivers(drivers.map((driver) => (driver.driver_id === currentDriver.driver_id ? updatedDriver : driver)));
+      } else {
+        const response = await fetch('http://localhost:5000/api/drivers', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(formData),
+        });
+        if (!response.ok) throw new Error('Failed to add driver');
+        const newDriver = await response.json();
+        setDrivers([...drivers, newDriver]);
+      }
+      setIsModalOpen(false);
+    } catch (err) {
+      setError(err.message);
     }
-    setIsModalOpen(false);
   };
 
   const handleModalClose = () => {
     setIsModalOpen(false);
   };
+
+  if (loading) return <div className="table-container">Đang tải...</div>;
 
   return (
     <div className="table-container">
@@ -81,29 +120,37 @@ const DriverTable = () => {
             </tr>
           </thead>
           <tbody>
-            {drivers.map((driver) => (
-              <tr key={driver.driver_id}>
-                <td>{driver.driver_id}</td>
-                <td>{driver.name}</td>
-                <td>{driver.address}</td>
-                <td>{driver.image_url}</td>
-                <td>{driver.phone_number}</td>
-                <td>
-                  <button
-                    className="action-btn edit-btn"
-                    onClick={() => handleEditClick(driver)}
-                  >
-                    Sửa
-                  </button>
-                  <button
-                    className="action-btn delete-btn"
-                    onClick={() => handleDeleteClick(driver.driver_id)}
-                  >
-                    Xóa
-                  </button>
+            {drivers.length === 0 && error ? (
+              <tr>
+                <td colSpan="6" style={{ textAlign: 'center', padding: '20px' }}>
+                  {error}
                 </td>
               </tr>
-            ))}
+            ) : (
+              drivers.map((driver) => (
+                <tr key={driver.driver_id}>
+                  <td>{driver.driver_id}</td>
+                  <td>{driver.name}</td>
+                  <td>{driver.address}</td>
+                  <td>{driver.image_url}</td>
+                  <td>{driver.phone_number}</td>
+                  <td>
+                    <button
+                      className="action-btn edit-btn"
+                      onClick={() => handleEditClick(driver)}
+                    >
+                      Sửa
+                    </button>
+                    <button
+                      className="action-btn delete-btn"
+                      onClick={() => handleDeleteClick(driver.driver_id)}
+                    >
+                      Xóa
+                    </button>
+                  </td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>

@@ -1,12 +1,30 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import './DriverStateTable.css';
 
 const DriverStateTable = () => {
-  const driverStates = [
-    { driver_id: 1, vehicle_id: 101, timestamp: '2025-05-03 08:00', status: 'Hoạt động', note: 'Đang giao hàng' },
-    { driver_id: 2, vehicle_id: 102, timestamp: '2025-05-03 08:15', status: 'Nghỉ', note: 'Tạm nghỉ 30 phút' },
-    { driver_id: 3, vehicle_id: 103, timestamp: '2025-05-03 07:45', status: 'Không hoạt động', note: 'Xe bảo trì' },
-  ];
+  const [driverStates, setDriverStates] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  // Lấy dữ liệu từ API khi component mount
+  useEffect(() => {
+    const fetchDriverStates = async () => {
+      try {
+        const response = await fetch('http://localhost:5000/api/driver-states');
+        if (!response.ok) throw new Error('Failed to fetch driver states');
+        const data = await response.json();
+        setDriverStates(data);
+      } catch (err) {
+        setDriverStates([]);
+        setError('Không có dữ liệu');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchDriverStates();
+  }, []);
+
+  if (loading) return <div className="table-container">Đang tải...</div>;
 
   return (
     <div className="table-container">
@@ -23,15 +41,23 @@ const DriverStateTable = () => {
             </tr>
           </thead>
           <tbody>
-            {driverStates.map((state, index) => (
-              <tr key={index}>
-                <td>{state.driver_id}</td>
-                <td>{state.vehicle_id}</td>
-                <td>{state.timestamp}</td>
-                <td>{state.status}</td>
-                <td>{state.note}</td>
+            {driverStates.length === 0 && error ? (
+              <tr>
+                <td colSpan="5" style={{ textAlign: 'center', padding: '20px' }}>
+                  {error}
+                </td>
               </tr>
-            ))}
+            ) : (
+              driverStates.map((state, index) => (
+                <tr key={index}>
+                  <td>{state.driver_id}</td>
+                  <td>{state.vehicle_id}</td>
+                  <td>{state.timestamp}</td>
+                  <td>{state.status}</td>
+                  <td>{state.note}</td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>

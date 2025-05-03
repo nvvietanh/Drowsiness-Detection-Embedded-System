@@ -1,12 +1,30 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import './AttendanceTable.css';
 
 const AttendanceTable = () => {
-  const attendances = [
-    { driver_id: 1, vehicle_id: 101, date: '2025-05-03', checkin_time: '08:00', checkout_time: '17:00', note: 'On time' },
-    { driver_id: 2, vehicle_id: 102, date: '2025-05-03', checkin_time: '08:15', checkout_time: '17:30', note: 'Late 15min' },
-    { driver_id: 3, vehicle_id: 103, date: '2025-05-03', checkin_time: '07:45', checkout_time: '16:45', note: 'Early leave' },
-  ];
+  const [attendances, setAttendances] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  // Lấy dữ liệu từ API khi component mount
+  useEffect(() => {
+    const fetchAttendances = async () => {
+      try {
+        const response = await fetch('http://localhost:5000/api/attendances');
+        if (!response.ok) throw new Error('Failed to fetch attendances');
+        const data = await response.json();
+        setAttendances(data);
+      } catch (err) {
+        setAttendances([]);
+        setError('Không có dữ liệu');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchAttendances();
+  }, []);
+
+  if (loading) return <div className="table-container">Đang tải...</div>;
 
   return (
     <div className="table-container">
@@ -24,16 +42,24 @@ const AttendanceTable = () => {
             </tr>
           </thead>
           <tbody>
-            {attendances.map((attendance, index) => (
-              <tr key={index}>
-                <td>{attendance.driver_id}</td>
-                <td>{attendance.vehicle_id}</td>
-                <td>{attendance.date}</td>
-                <td>{attendance.checkin_time}</td>
-                <td>{attendance.checkout_time}</td>
-                <td>{attendance.note}</td>
+            {attendances.length === 0 && error ? (
+              <tr>
+                <td colSpan="6" style={{ textAlign: 'center', padding: '20px' }}>
+                  {error}
+                </td>
               </tr>
-            ))}
+            ) : (
+              attendances.map((attendance, index) => (
+                <tr key={index}>
+                  <td>{attendance.driver_id}</td>
+                  <td>{attendance.vehicle_id}</td>
+                  <td>{attendance.date}</td>
+                  <td>{attendance.checkin_time}</td>
+                  <td>{attendance.checkout_time}</td>
+                  <td>{attendance.note}</td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>
