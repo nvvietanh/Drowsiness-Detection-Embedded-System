@@ -1,0 +1,56 @@
+.table-container {
+    padding: 20px;
+    flex-grow: 1;
+    background-color: #f9fafb;
+    min-height: 100vh;
+  }
+  
+  .table-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #1f2937;
+    text-align: center;
+    margin-bottom: 20px;
+    text-transform: uppercase;
+  }
+  
+  .table-wrapper {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+  }
+  
+  .driver-state-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: center;
+  }
+  
+  .driver-state-table th,
+  .driver-state-table td {
+    padding: 12px 15px;
+    font-size: 14px;
+    color: #374151;
+  }
+  
+  .driver-state-table th {
+    background-color: #3b82f6;
+    color: white;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  
+  .driver-state-table td {
+    border-bottom: 1px solid #e5e7eb;
+  }
+  
+  .driver-state-table tbody tr:hover {
+    background-color: #f3f4f6;
+    transition: background-color 0.2s ease-in-out;
+  }
+  
+  .driver-state-table tbody tr:last-child td {
+    border-bottom: none;
+  }
