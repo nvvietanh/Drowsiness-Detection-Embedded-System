@@ -61,6 +61,8 @@ dnn1/__pycache__/
 dnn1/venv/
 dnn1/mobilenetv2.h5
 
+server/models/shape_predictor_68_face_landmarks.dat
+
 # === Jupyter notebooks checkpoints ===
 .ipynb_checkpoints/
 

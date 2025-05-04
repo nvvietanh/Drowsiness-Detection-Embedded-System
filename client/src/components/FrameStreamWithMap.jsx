@@ -8,7 +8,7 @@ import L from "leaflet";
 const position = [10.762622, 106.660172];
 
 const imageUrls = [
-  "https://via.placeholder.com/400x250?text=Frame+1",
+  "http://localhost:5000/video_feed",
   "https://via.placeholder.com/400x250?text=Frame+2",
   "https://via.placeholder.com/400x250?text=Frame+3",
 ];
