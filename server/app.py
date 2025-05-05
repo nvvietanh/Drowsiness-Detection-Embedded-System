@@ -2,6 +2,7 @@
 # Import modules, libraries
 # -----------------------------------
 from flask import Flask, Response, request, jsonify
+from flask_cors import CORS
 from flask_socketio import SocketIO, emit
 import numpy as np
 import json
@@ -10,14 +11,22 @@ import time
 import cv2
 import requests
 import os
+import copy
 from dotenv import load_dotenv
+
+# from multiprocessing import Manager
+
+# manager = Manager()
+# coord_data = manager.dict()
+
 
 load_dotenv()
 
+from coord_handler import get_coord_data
 from mqtt_client import connect_mqtt, set_socketio
 # from server.stream import generate_frames
 from mediapipe_dlib import mediapipe_detector_stream, dlib_detector_stream
-from video_aux import capture_frames, generate_stream, send_frame_every_minute, change_mode
+from video_aux import capture_frames, generate_stream, send_frame_every_minute, change_mode, detect_drowsiness
 # -----------------------------------
 
 # ---------------------------------
@@ -25,19 +34,24 @@ from video_aux import capture_frames, generate_stream, send_frame_every_minute, 
 # ---------------------------------
 
 
+
+
 SERVER_URL = os.getenv("SERVER_URL")
-ii = 0
 
 # -----------------------------------
 # Global variables declarations
 # ----------------------------------- 
-
-
+# coord_data = None
+coord_data = {}
+latest_frame = None
+lock = threading.Lock()
+lock1 = threading.Lock()
 
 # -----------------------------------
 # App settings
 # -----------------------------------
 app = Flask(__name__)
+CORS(app)
 
 # -----------------------------------
 # MQTT settings
@@ -50,6 +64,47 @@ app = Flask(__name__)
 # ... sau khi tạo socketio ...
 socketio = SocketIO(app, cors_allowed_origins="*")
 set_socketio(socketio)
+
+@socketio.on("connect")
+def handle_connect():
+    print("Client connected")
+
+# Callback khi nhận alert từ MQTT
+
+
+
+
+# def handle_coordinate_receive(message):
+#     global coord_data
+
+#     # Chuyển byte về chuỗi rồi parse JSON
+#     # payload_str = message.payload.decode("utf-8")
+#     # data = json.loads(payload_str)
+
+#     data = parse_mqtt_json_payload(message.payload)
+#     data["vehicle_id"] = os.getenv("VEHICLE_ID")
+#     # print(f"[WebSocket Emit] coord: {message}")
+
+#     # if data:
+#     #     # print("Dữ liệu hợp lệ:")
+#     #     # print("Latitude:", data.get("lat"))
+#     #     # print("Longitude:", data.get("lng"))
+#     #     # print("Time (UTC):", data.get("time"))
+#     # else:
+#     #     print("Không thể phân tích payload!")
+
+#     # socketio.emit("coord", {"data" : data})
+#     # coord_data.clear()
+#     # coord_data.update(data)
+
+#     with lock1:  # Sử dụng khóa để bảo vệ coord_data
+#         # coord_data = copy.deepcopy(data)
+#         # print(f"coord_data: {coord_data}")
+#         coord_data.clear()
+#         coord_data.update(data)
+#         print(f"coord_data: {coord_data}")
+
+#     # print(f"sent coord: {data}")
 
 # -----------------------------------
 # Model settings
@@ -64,10 +119,19 @@ set_socketio(socketio)
 # -----------------------------------
 # Frame settings
 # -----------------------------------
-latest_frame = None
-lock = threading.Lock()
 
 
+@app.route('/coordinate', methods=['GET'])
+def get_coordinate():
+    # Trả về dữ liệu tọa độ mới nhất
+    coord_data = get_coord_data()
+    with lock1:  # Sử dụng khóa để bảo vệ coord_data
+        if coord_data:
+            print(f"Returning coord_data: {coord_data}")
+            return jsonify(dict(coord_data)), 200
+        else:
+            print("No coordinate data available.")
+            return jsonify({"message": "No coordinate data available."}), 404
 
 @app.route('/')
 def index():
@@ -133,10 +197,27 @@ def attendance():
         response='{"status": "success", "message": "Attendance recorded successfully."}',
     )
 
+# driver for calling api
+@app.route('/drowsiness', methods=['POST', 'GET'])
+def drowsiness():
+
+    return Response(
+        status=200,
+        mimetype='application/json',
+        headers={'Content-Type': 'application/json'},
+        response='{"status": "success", "message": "State saved successfully."}',
+    )
+
+# from gevent import monkey
+# monkey.patch_all()
+
 if __name__ == '__main__':
+    
     connect_mqtt()
     threading.Thread(target=capture_frames, daemon=True).start()
+    threading.Thread(target=detect_drowsiness, daemon=True).start()
     # display_video()
     threading.Thread(target=send_frame_every_minute, daemon=True).start()
     # capture_frames()
     app.run(host='0.0.0.0', port=5000, debug=True, use_reloader=False)
+    # socketio.run(app, host='0.0.0.0', port=5000, debug=True, use_reloader=False)

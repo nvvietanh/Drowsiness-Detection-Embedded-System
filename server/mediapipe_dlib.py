@@ -3,7 +3,7 @@ import time
 import argparse
 import numpy as np
 from mqtt_client import publish_detection
-
+# from app import publish_detection
 
 # EAR calculation
 from scipy.spatial import distance as dist
@@ -178,6 +178,7 @@ class DrowsinessDetectorDlib:
         self.EAR_THRESHOLD = ear_threshold
         self.CONSEC_FRAMES = consec_frames
         self.counter = 0
+        self.is_drowsy = False
 
     def process_frame(self, frame):
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
@@ -198,13 +199,15 @@ class DrowsinessDetectorDlib:
                 self.counter += 1
                 if self.counter >= self.CONSEC_FRAMES:
                     cv2.putText(frame, "BUON NGU!", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
-                    publish_detection("BUON_NGU")
+                    # publish_detection("BUON_NGU")
+                    self.is_drowsy = True
             else:
                 self.counter = 0
+                self.is_drowsy = False
 
             cv2.putText(frame, f"EAR: {ear:.2f}", (300, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 0), 1)
 
-        return frame
+        return self.is_drowsy, frame
 
 
 # ========================= MEDIAPIPE MODULE ================================
@@ -338,6 +341,7 @@ class DrowsinessDetectorMediapipe:
         self.counter = 0
         self.LEFT_EYE_IDX = [362, 385, 387, 263, 373, 380]
         self.RIGHT_EYE_IDX = [33, 160, 158, 133, 153, 144]
+        self.is_drowsy = False
 
     def process_frame(self, frame):
         h, w = frame.shape[:2]
@@ -355,14 +359,16 @@ class DrowsinessDetectorMediapipe:
                     self.counter += 1
                     if self.counter >= self.CONSEC_FRAMES:
                         cv2.putText(frame, "BUON NGU!", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
-                        publish_detection("BUON_NGU")
+                        # publish_detection("BUON_NGU")
+                        self.is_drowsy = True
                 else:
                     self.counter = 0
+                    self.is_drowsy = False
 
                 cv2.putText(frame, f"EAR: {ear:.2f}", (300, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 0), 1)
                 for (x, y) in left_eye + right_eye:
                     cv2.circle(frame, (x, y), 2, (0, 255, 0), -1)
-        return frame
+        return self.is_drowsy, frame
 
         
 def mediapipe_detector_frame(frame):

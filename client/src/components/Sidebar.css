@@ -1,9 +1,9 @@
 /* src/components/Sidebar.css */
 .sidebar {
     background-color: #888;
-    width: 150px;
+    width: 160px;
     padding: 20px;
-    height: 100vh;
+    height: 80vh;
   }
   
   .btn {
