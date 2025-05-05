@@ -38,11 +38,11 @@ client/.env
 client/.env.*
 
 # === Flask + venv (server/) ===
-server/venv/
-server/__pycache__/
-server/.env
-server/*.pyc
-server/yolov8n.pt
+edge_device_app/venv/
+edge_device_app/__pycache__/
+edge_device_app/.env
+edge_device_app/*.pyc
+edge_device_app/yolov8n.pt
 
 # === DNN ===
 dnn/Driver Drowsiness Dataset (DDD)/
@@ -61,7 +61,7 @@ dnn1/__pycache__/
 dnn1/venv/
 dnn1/mobilenetv2.h5
 
-server/models/shape_predictor_68_face_landmarks.dat
+edge_device_app/models/shape_predictor_68_face_landmarks.dat
 
 # === Jupyter notebooks checkpoints ===
 .ipynb_checkpoints/
