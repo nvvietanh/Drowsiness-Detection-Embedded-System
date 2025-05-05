@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useLocation, useParams } from "react-router-dom";
-import { Box, Grid, Typography, Paper, Button } from "@mui/material";
-import { MapContainer, TileLayer, Marker, Popup, useMap, CircleMarker } from "react-leaflet";
+import { Box, Grid, Typography, Paper, Button, TableContainer, Table, TableHead, TableRow, TableCell, TableBody } from "@mui/material";
+import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import axios from "axios";
@@ -11,12 +11,6 @@ import { Polyline } from "react-leaflet/Polyline"; // Import Polyline từ react
 
 // Tọa độ ví dụ: Sài Gòn
 const position = [10.762622, 106.660172];
-
-const imageUrls = [
-  "http://localhost:5000/video_feed",
-  // "https://via.placeholder.com/400x250?text=Frame+2",
-  // "https://via.placeholder.com/400x250?text=Frame+3",
-];
 
 const UpdateMapView = ({ coords }) => {
   const map = useMap();
@@ -39,7 +33,7 @@ const ResizeMap = () => {
   return null;
 };
 
-const FrameStreamWithLeaflet = () => {
+const LocationWithLeaflet = () => {
 
   const location = useLocation(); // Lấy dữ liệu từ state
   const { vehicleId } = useParams(); // Lấy vehicleId từ URL
@@ -76,17 +70,21 @@ const FrameStreamWithLeaflet = () => {
   useEffect(() => {
     const fetchCoords = async () => {
       try {
-        const response = await axios.get("http://127.0.0.1:5000/coordinate");
-        const { lat, lng } = response.data;
-        console.log("Received coords:", { lat, lng });
-        setCoords([lat, lng]); // Cập nhật vị trí
+        const response = await axios.get(`http://127.0.0.1:5000/vehicle/${vehicle.vehicle_id}/coordinates/?quantity=20`);
+        const newCoords = response.data; // Response trả về mảng [{ lat, lng, time,... }, ...]
+        
         setPath((prevPath) => {
-          const updatedPath = [...prevPath, { lat, lng }];
+          const updatedPath = [...prevPath, ...newCoords]; // Thêm tọa độ mới vào danh sách
           if (updatedPath.length > 20) {
-            updatedPath.shift(); // Giới hạn danh sách ở 20 phần tử
+            return updatedPath.slice(-20); // Giữ lại 20 phần tử cuối cùng
           }
           return updatedPath;
         });
+
+        // Cập nhật tọa độ hiện tại (tọa độ cuối cùng trong danh sách)
+        if (newCoords.length > 0) {
+          setCoords([newCoords[newCoords.length - 1].lat, newCoords[newCoords.length - 1].lng]);
+        }
       } catch (error) {
         console.error("Error fetching coords:", error);
       }
@@ -127,10 +125,10 @@ const FrameStreamWithLeaflet = () => {
         {/* Luồng hình ảnh */}
         <Grid item xs={12} md={6} sx={{ width: "40%", height: "100%" }}>
           <Paper sx={{ height: "100%", p: 2 }}>
-            <Typography variant="h6" gutterBottom>
+            {/* <Typography variant="h6" gutterBottom>
               Camera
-            </Typography>
-            {imageUrls.map((url, index) => (
+            </Typography> */}
+            {/* {imageUrls.map((url, index) => (
               <Box key={index} mb={2}>
                 <img
                   src={url}
@@ -138,9 +136,9 @@ const FrameStreamWithLeaflet = () => {
                   style={{ width: "100%", borderRadius: "8px" }}
                 />
               </Box>
-            ))}
+            ))} */}
 
-            <Grid container spacing={2}>
+            {/* <Grid container spacing={2}>
               <Grid item xs={6}>
                 <Button
                   variant="contained"
@@ -177,7 +175,33 @@ const FrameStreamWithLeaflet = () => {
                   sx={{ width: "100%" }}
                 >Sử dụng Dlib</Button>
               </Grid>
-            </Grid>
+            </Grid> */}
+
+            {/* Danh sách vị trí */}
+            <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>
+              Danh sách tọa độ
+            </Typography>
+            
+            <TableContainer>
+              <Table>
+                <TableHead>
+                  <TableRow>
+                    <TableCell><strong>Vĩ độ</strong></TableCell>
+                    <TableCell><strong>Kinh độ</strong></TableCell>
+                    <TableCell><strong>Thời gian</strong></TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {path.map((coord, index) => (
+                    <TableRow key={index}>
+                      <TableCell>{coord.lat}</TableCell>
+                      <TableCell>{coord.lng}</TableCell>
+                      <TableCell>{coord.time}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
 
           </Paper>
         </Grid>
@@ -201,32 +225,10 @@ const FrameStreamWithLeaflet = () => {
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                 height="100px"
               />
-              {/* Hiển thị tọa độ hiện tại bằng Marker */}
               <Marker position={coords}>
-                <Popup>Vị trí hiện tại: Vĩ độ {coords[0]}, Kinh độ {coords[1]}</Popup>
+                <Popup>Vị trí đang giám sát</Popup>
               </Marker>
-
-              {/* Hiển thị các tọa độ cũ bằng CircleMarker */}
-              {path.map((coord, index) => (
-                <CircleMarker
-                  key={index}
-                  center={[coord.lat, coord.lng]}
-                  radius={2} // Kích thước dấu chấm
-                  color="blue" // Màu viền
-                  fillColor="blue" // Màu nền
-                  fillOpacity={0.8} // Độ trong suốt
-                >
-                  <Popup >
-                    Vĩ độ: {coord.lat}, Kinh độ: {coord.lng}
-                  </Popup>
-                </CircleMarker>
-              ))}
-              <Polyline
-                positions={path.map(coord => [coord.lat, coord.lng])} // Chuyển đổi tọa độ thành định dạng [lat, lng]
-                color="pink" // Màu đường vẽ
-                weight={1} // Độ dày của đường vẽ
-                opacity={0.8} // Độ trong suốt
-              />
+              <Polyline positions={path} color="blue" />
             </MapContainer>
           </Paper>
         </Grid>
@@ -235,4 +237,4 @@ const FrameStreamWithLeaflet = () => {
   );
 };
 
-export default FrameStreamWithLeaflet;
+export default LocationWithLeaflet;

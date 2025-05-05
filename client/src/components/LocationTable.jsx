@@ -4,13 +4,13 @@ import { useNavigate } from "react-router-dom";
 import "./DetectionTable.css"; // Tạo file CSS để định dạng
 import xe_tai from "../assets/images/xe-tai-jac-n680-may-duc_aba34ae2403e4f608ba75c7cef339f5d_master.webp"; // Hình ảnh xe tải
 
-const DetectionTable = ({ setCurrentView }) => {
+const LocationTable = ({ setCurrentView }) => {
   const [vehicles, setVehicles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
   const handleClick = (vehicle) => {
-    navigate(`/vehicle/${vehicle.vehicle_id}`, { state: vehicle }); // Điều hướng đến trang chi tiết xe
+    navigate(`/vehicle/${vehicle.vehicle_id}/location`, { state: vehicle }); // Điều hướng đến trang chi tiết xe
     // setCurrentView("Quản lý xe"); // Cập nhật view hiện tại
   };
 
@@ -65,12 +65,12 @@ const DetectionTable = ({ setCurrentView }) => {
           key={vehicle.vehicle_id} 
           className="vehicle-card" 
           onClick={() => handleClick(vehicle)}>
-          <img
+          {/* <img
             src={vehicle.image_url || xe_tai}
             alt={`Vehicle ${vehicle.vehicle_id}`}
             className="vehicle-image"
             
-          />
+          /> */}
           <div className="vehicle-info">
             <p><strong>ID Xe:</strong> {vehicle.vehicle_id}</p>
             <p><strong>Biển số:</strong> {vehicle.license_plate}</p>
@@ -81,4 +81,4 @@ const DetectionTable = ({ setCurrentView }) => {
   );
 };
 
-export default DetectionTable;
+export default LocationTable;
