@@ -39,6 +39,7 @@ client/.env.*
 
 # === Flask + venv (server/) ===
 edge_device_app/venv/
+edge_device_app/venv1/
 edge_device_app/__pycache__/
 edge_device_app/.env
 edge_device_app/*.pyc

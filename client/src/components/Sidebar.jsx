@@ -9,9 +9,9 @@ export default function Sidebar({ onButtonClick, currentView }) {
     { label: 'Giám sát', path: '/' },
     { label: 'Chấm công', path: '/attendance' },
     { label: 'Quản lý vị trí', path: '/location-management' },
-    { label: 'Quản lý trạng thái xe', path: '/vehicle-status' },
-    { label: 'Quản lý tài xế', path: '/driver-management' },
-    { label: 'Quản lý xe', path: '/vehicle-management' },
+    { label: 'Quản lý trạng thái xe', path: '/driver-state' },
+    { label: 'Quản lý tài xế', path: '/driver' },
+    { label: 'Quản lý xe', path: '/vehicle' },
   ];
 
   return (

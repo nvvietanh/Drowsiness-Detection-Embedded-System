@@ -18,9 +18,11 @@ const VehicleTable = () => {
   useEffect(() => {
     const fetchVehicles = async () => {
       try {
-        const response = await fetch('http://localhost:5000/api/vehicles');
+        const response = await fetch(`${process.env.REACT_APP_API_URL}/vehicles`);
+        console.log(`${process.env.REACT_APP_API_URL}/vehicles`);
         if (!response.ok) throw new Error('Failed to fetch vehicles');
         const data = await response.json();
+        console.log(data);
         setVehicles(data);
       } catch (err) {
         setVehicles([]);
@@ -48,8 +50,12 @@ const VehicleTable = () => {
   const handleDeleteClick = async (vehicle_id) => {
     if (window.confirm('Bạn có chắc chắn muốn xóa xe này?')) {
       try {
-        const response = await fetch(`http://localhost:5000/api/vehicles/${vehicle_id}`, {
-          method: 'DELETE',
+        const response = await fetch(`${process.env.REACT_APP_API_URL}/vehicles/delete`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            'vehicle_id' : vehicle_id, 
+          }),
         });
         if (!response.ok) throw new Error('Failed to delete vehicle');
         setVehicles(vehicles.filter((vehicle) => vehicle.vehicle_id !== vehicle_id));
@@ -68,7 +74,7 @@ const VehicleTable = () => {
     e.preventDefault();
     try {
       if (isEditMode) {
-        const response = await fetch(`http://localhost:5000/api/vehicles/${currentVehicle.vehicle_id}`, {
+        const response = await fetch(`${process.env.REACT_APP_API_URL}/vehicles/${currentVehicle.vehicle_id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(formData),
@@ -77,7 +83,7 @@ const VehicleTable = () => {
         const updatedVehicle = await response.json();
         setVehicles(vehicles.map((vehicle) => (vehicle.vehicle_id === currentVehicle.vehicle_id ? updatedVehicle : vehicle)));
       } else {
-        const response = await fetch('http://localhost:5000/api/vehicles', {
+        const response = await fetch(`${process.env.REACT_APP_API_URL}/vehicles`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(formData),
