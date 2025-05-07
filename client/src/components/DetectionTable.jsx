@@ -24,7 +24,7 @@ const DetectionTable = ({ setCurrentView }) => {
     const fetchVehicles = async () => {
 
       try {
-        const response = await fetch("http://localhost:5000/api/vehicles");
+        const response = await fetch(`${process.env.REACT_APP_API_URL}/vehicles`);
         if (response.ok) {
           // throw new Error("Không thể lấy dữ liệu từ server");
           const data = await response.json();
@@ -41,7 +41,7 @@ const DetectionTable = ({ setCurrentView }) => {
       {
         vehicle_id: 1,
         license_plate: "29A-123.45",
-        image_url: "http://localhost:5000/video_feed"
+        image_url: "http://26.254.107.153:5000/video_feed"
       },
       {
         vehicle_id: 2,
