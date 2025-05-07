@@ -13,6 +13,7 @@ import VehicleTable from './components/VehicleTable';
 import DetectionTable from './components/DetectionTable';
 import LocationTable from './components/LocationTable';
 import LocationWithLeaflet from './components/LocationWithMap';
+import AttendanceDetailTable from './components/AttendanceDetailTable';
 
 function App() {
   const [currentView, setCurrentView] = useState('FrameStreamWithMap');
@@ -56,6 +57,7 @@ function App() {
                 <Route path="/vehicle/:vehicleId/location" element={<LocationWithLeaflet />} />
                 <Route path="/vehicle/:vehicleId" element={<FrameStreamWithMap />} />
                 {/* <Route path="/detection" element={<DetectionTable />} /> */}
+                <Route path="/attendance-detail" element={<AttendanceDetailTable />} />
               </Routes>
             {/* </Router> */}
           </div>
