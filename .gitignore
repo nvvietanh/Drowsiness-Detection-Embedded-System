@@ -52,6 +52,9 @@ server/.env
 server/*.pyc
 server/yolov8n.pt
 
+edge_device_app/models/shape_predictor_68_face_landmarks.dat
+server/models/shape_predictor_68_face_landmarks.dat
+
 # === DNN ===
 dnn/Driver Drowsiness Dataset (DDD)/
 dnn/Driver Drowsiness Dataset (DDD)_1/
@@ -69,7 +72,7 @@ dnn1/__pycache__/
 dnn1/venv/
 dnn1/mobilenetv2.h5
 
-edge_device_app/models/shape_predictor_68_face_landmarks.dat
+
 
 # === Jupyter notebooks checkpoints ===
 .ipynb_checkpoints/
