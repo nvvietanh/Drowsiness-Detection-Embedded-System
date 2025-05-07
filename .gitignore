@@ -45,6 +45,13 @@ edge_device_app/.env
 edge_device_app/*.pyc
 edge_device_app/yolov8n.pt
 
+server/venv/
+server/venv1/
+server/__pycache__/
+server/.env
+server/*.pyc
+server/yolov8n.pt
+
 # === DNN ===
 dnn/Driver Drowsiness Dataset (DDD)/
 dnn/Driver Drowsiness Dataset (DDD)_1/

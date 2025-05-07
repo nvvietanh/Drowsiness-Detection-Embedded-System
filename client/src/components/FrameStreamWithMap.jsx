@@ -147,7 +147,7 @@ const FrameStreamWithLeaflet = () => {
                   color="primary"
                   title="Phát hiện buồn ngủ sử dụng MediaPipe"
                   onClick={() => {
-                    axios.get("http://127.0.0.1:5000/change_mode/1")
+                    axios.get(`${vehicle.vehicle_ip}/change_mode/1`)
                     .then((response) => {
                       console.log("Response:", response.data);
                     })
@@ -165,7 +165,25 @@ const FrameStreamWithLeaflet = () => {
                   color="primary"
                   title="Phát hiện buồn ngủ sử dụng Dlib"
                   onClick={() => {
-                    axios.get("http://127.0.0.1:5000/change_mode/2")
+                    axios.get(`${vehicle.vehicle_ip}:5000/change_mode/2`)
+                    .then((response) => {
+                      console.log("Response:", response.data);
+                    })
+                    .catch((error) => {
+                      console.error("Error:", error);
+                    });
+                    
+                    }}
+                  sx={{ width: "100%" }}
+                >Sử dụng Dlib</Button>
+              </Grid>
+              <Grid item xs={6}>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  title="Phát hiện buồn ngủ sử dụng Dlib"
+                  onClick={() => {
+                    axios.get(`${vehicle.vehicle_ip}:5000/change_mode/3`)
                     .then((response) => {
                       console.log("Response:", response.data);
                     })
