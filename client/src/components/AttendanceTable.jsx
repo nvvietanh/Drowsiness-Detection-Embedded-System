@@ -31,8 +31,8 @@ const AttendanceTable = () => {
     navigate('/attendance-detail', {
       state: {
         driver_id: attendance.driver_id,
-        vehicle_id: attendance.vehicle_id,
-        date: attendance.date
+        date: attendance.date,
+        folder_path: attendance.folder_path
       }
     });
   };
@@ -47,11 +47,9 @@ const AttendanceTable = () => {
           <thead>
             <tr>
               <th>Mã tài xế</th>
-              <th>Mã xe</th>
               <th>Ngày</th>
               <th>Giờ vào</th>
               <th>Giờ ra</th>
-              <th>Ghi chú</th>
             </tr>
           </thead>
           <tbody>
@@ -69,11 +67,9 @@ const AttendanceTable = () => {
                   style={{ cursor: 'pointer' }}
                 >
                   <td>{attendance.driver_id}</td>
-                  <td>{attendance.vehicle_id}</td>
                   <td>{attendance.date}</td>
                   <td>{attendance.checkin_time}</td>
                   <td>{attendance.checkout_time}</td>
-                  <td>{attendance.note}</td>
                 </tr>
               ))
             )}
