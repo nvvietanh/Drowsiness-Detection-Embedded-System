@@ -12,11 +12,11 @@ import { Polyline } from "react-leaflet/Polyline"; // Import Polyline từ react
 // Tọa độ ví dụ: Sài Gòn
 const position = [10.762622, 106.660172];
 
-const imageUrls = [
-  "http://localhost:5000/video_feed",
-  // "https://via.placeholder.com/400x250?text=Frame+2",
-  // "https://via.placeholder.com/400x250?text=Frame+3",
-];
+// const imageUrls = [
+//   `${}/video_feed`,
+//   // "https://via.placeholder.com/400x250?text=Frame+2",
+//   // "https://via.placeholder.com/400x250?text=Frame+3",
+// ];
 
 const UpdateMapView = ({ coords }) => {
   const map = useMap();
@@ -24,8 +24,14 @@ const UpdateMapView = ({ coords }) => {
   useEffect(() => {
     if (coords) {
       map.setView(coords, map.getZoom()); // Di chuyển bản đồ đến vị trí mới
+      // Gọi invalidateSize sau khi setView
+      setTimeout(() => {
+        map.invalidateSize();
+      }, 100); // hoặc 0 cũng được thử
     }
-  }, [coords, map]);
+
+    
+  }, [coords]);
 
   return null;
 };
@@ -38,6 +44,24 @@ const ResizeMap = () => {
   }, [map]);
   return null;
 };
+
+// import { useMap } from 'react-leaflet';
+// import { useEffect } from 'react';
+
+function RecenterMap({ coords }) {
+  const map = useMap();
+
+  useEffect(() => {
+    if (coords) {
+      map.setView([coords.lat, coords.lng], map.getZoom(), {
+        animate: true
+      });
+    }
+  }, [coords]);
+
+  return null;
+}
+
 
 const FrameStreamWithLeaflet = () => {
 
@@ -76,7 +100,7 @@ const FrameStreamWithLeaflet = () => {
   useEffect(() => {
     const fetchCoords = async () => {
       try {
-        const response = await axios.get("http://127.0.0.1:5000/coordinate");
+        const response = await axios.get(`${vehicle.vehicle_ip}/coordinate`);
         const { lat, lng } = response.data;
         console.log("Received coords:", { lat, lng });
         setCoords([lat, lng]); // Cập nhật vị trí
@@ -130,15 +154,20 @@ const FrameStreamWithLeaflet = () => {
             <Typography variant="h6" gutterBottom>
               Camera
             </Typography>
-            {imageUrls.map((url, index) => (
-              <Box key={index} mb={2}>
+            {/* {imageUrls.map((url, index) => ( */}
+              <Box key={1} mb={2}>
                 <img
-                  src={url}
-                  alt={`Frame ${index + 1}`}
+                  src={vehicle.vehicle_ip + "/video_feed"}
+                  alt={`Frame 1`}
                   style={{ width: "100%", borderRadius: "8px" }}
                 />
               </Box>
-            ))}
+            {/* // ) */}
+            {/* )} */}
+
+            <Typography variant="h6" gutterBottom>
+              Chuyển chế độ phát hiện buồn ngủ
+            </Typography>
 
             <Grid container spacing={2}>
               <Grid item xs={6}>
@@ -165,7 +194,7 @@ const FrameStreamWithLeaflet = () => {
                   color="primary"
                   title="Phát hiện buồn ngủ sử dụng Dlib"
                   onClick={() => {
-                    axios.get(`${vehicle.vehicle_ip}:5000/change_mode/2`)
+                    axios.get(`${vehicle.vehicle_ip}/change_mode/2`)
                     .then((response) => {
                       console.log("Response:", response.data);
                     })
@@ -181,9 +210,9 @@ const FrameStreamWithLeaflet = () => {
                 <Button
                   variant="contained"
                   color="primary"
-                  title="Phát hiện buồn ngủ sử dụng Dlib"
+                  title="Phát hiện buồn ngủ sử dụng YOLO"
                   onClick={() => {
-                    axios.get(`${vehicle.vehicle_ip}:5000/change_mode/3`)
+                    axios.get(`${vehicle.vehicle_ip}/change_mode/3`)
                     .then((response) => {
                       console.log("Response:", response.data);
                     })
@@ -193,7 +222,7 @@ const FrameStreamWithLeaflet = () => {
                     
                     }}
                   sx={{ width: "100%" }}
-                >Sử dụng Dlib</Button>
+                >Sử dụng YOLO</Button>
               </Grid>
             </Grid>
 
@@ -201,23 +230,29 @@ const FrameStreamWithLeaflet = () => {
         </Grid>
 
         {/* Bản đồ Leaflet */}
-        <Grid item xs={12} md={6} sx={{ width: "50%", height: "100%" }}>
+        <Grid item xs={12} md={6} sx={{ width: "40vw", height: "100%" }}>
           <Paper sx={{ height: "100%", p: 2}}>
             <Typography variant="h6" gutterBottom>
               Vị trí trên bản đồ
             </Typography>
             <MapContainer
+              key={`${position[0]}-${position[1]}`}
               center={position}
               zoom={15}
               style={{ height: "60vh", width: "100%", borderRadius: "8px" }}
               // height="100px"
             >
               <ResizeMap />
+              
               <UpdateMapView coords={coords} />
               <TileLayer
                 attribution='&copy; <a href="http://osm.org/copyright">OpenStreetMap</a>'
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                 height="100px"
+  //               url="https://stamen-tiles.a.ssl.fastly.net/terrain/{z}/{x}/{y}.jpg"
+  // attribution='Map tiles by <a href="http://stamen.com">Stamen Design</a>'
+  //             url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
+  // attribution='&copy; <a href="https://carto.com/">CARTO</a>'
               />
               {/* Hiển thị tọa độ hiện tại bằng Marker */}
               <Marker position={coords}>

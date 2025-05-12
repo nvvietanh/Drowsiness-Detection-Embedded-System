@@ -257,17 +257,23 @@ def get_driver_id():
         print("Không thể mã hóa frame")
         DRIVER_ID = None
         
-    # Gửi frame dưới dạng file ảnh
+    # Gửi frame dưới dạng file ảnhS
     files = {'image': ('frame.jpg', buffer.tobytes(), 'image/jpeg')}
     try:
         response = requests.post(f'{SERVER_URL}/get_driver_id', files=files)
         data = response.json()
         if response.status_code == 200 and 'driver_id' in data:
             DRIVER_ID = data['driver_id']
+            print("Driver ID:", DRIVER_ID)
+        else :
+            DRIVER_ID = None
+            print("Lỗi khi nhận driver_id", response.status_code)
     except Exception as e:
         print("Lỗi khi gửi ảnh:", e)
         DRIVER_ID = None
-    DRIVER_ID = None
+
+
+    # DRIVER_ID = None
 # def get_vehicle_id():
 #     global VEHICLE_ID
 #     from mqtt import get_vehicle_id
@@ -279,16 +285,38 @@ def reset_attendance_id():
     ATTENDANCE_ID = None
 
 # Hàm để thêm điểm danh
-def add_attendance(driver_id, vehicle_id, date):
-    checkin_time = datetime.now().time().isoformat()
+def add_attendance(driver_id):
+    # checkin_time = datetime.now().time().isoformat()
     attendance_data = {
         "driver_id": driver_id,
-        "vehicle_id": vehicle_id,
-        "note": "Điểm danh mới",
-        "checkin_time": checkin_time,
-        "checkout_time": None
+        # "vehicle_id": vehicle_id,
+        # "note": "Điểm danh mới",
+        "checkin_time": datetime.now().time().isoformat(),
+        "date" : datetime.now().date().isoformat(),
+        # "checkout_time": None
     }
-    response = requests.post(f"{SERVER_URL}/attendances/add", json=attendance_data)
+    frame = None
+    with lock:
+        if latest_frame is None:
+            print("Không có frame để gửi.")
+            return
+        frame = latest_frame.copy()
+    if frame is None:
+        print("Không có frame để gửi.")
+        return
+
+    # Encode frame sang JPEG
+    ret, frame = cv2.imencode('.jpg', frame)
+    if not ret:
+        print("Không thể mã hóa frame")
+        return
+
+    response = requests.post(f"{SERVER_URL}/attendances/add",
+        json=attendance_data,
+        data=attendance_data,
+        files={
+            "image": ("frame.jpg", frame.tobytes(), "image/jpeg"),
+        })
     
     if response.status_code == 200:
         print("Thêm điểm danh thành công.")
@@ -296,21 +324,48 @@ def add_attendance(driver_id, vehicle_id, date):
         print(f"Lỗi khi thêm điểm danh: {response.status_code}, {response.text}")
 
 # Hàm để cập nhật điểm danh
-def update_attendance(attendance_id, driver_id, vehicle_id, checkin_time, checkout_time, note):
+def update_attendance(
+    attendance_id, driver_id, vehicle_id, checkout_time, folder_path):
     update_data = {
         "attendance_id": attendance_id,
         "driver_id": driver_id,
-        "vehicle_id": vehicle_id,
-        "checkin_time": checkin_time,
+        # "vehicle_id": vehicle_id,
+        # "checkin_time": checkin_time,
         "checkout_time": checkout_time,
-        "note": note
+        # "note": note
+        "folder_path": folder_path,
     }
-    response = requests.post(f"{SERVER_URL}/attendances/update", json=update_data)
+
+    with lock:
+        if latest_frame is None:
+            print("Không có frame để gửi.")
+            return
+        frame = latest_frame.copy()
+    if frame is None:
+        print("Không có frame để gửi.")
+        return
+
+    # Encode frame sang JPEG
+    ret, frame = cv2.imencode('.jpg', frame)
+    if not ret:
+        print("Không thể mã hóa frame")
+        return
+
+    files = {
+        "image": ("frame.jpg", frame.tobytes(), "image/jpeg"),
+    }
+
+    response = requests.post(
+        f"{SERVER_URL}/attendances/update",
+        json=update_data,
+        data=update_data,
+        files=files)
     
     if response.status_code == 200:
         print("Cập nhật điểm danh thành công.")
     else:
         print(f"Lỗi khi cập nhật điểm danh: {response.status_code}, {response.text}")
+
 # HÀM GỌI API
 def save_infor():
     global DRIVER_ID
@@ -324,19 +379,24 @@ def save_infor():
         ATTENDANCE_API_URL = f"{SERVER_URL}/attendances/search"  # Địa chỉ API điểm danh
         # Gọi API tìm điểm danh của tài xế và xe theo driver_id, vehicle_id, và date
         response = requests.post(ATTENDANCE_API_URL, json={
-            "driver_id": DRIVER_ID,
-            "vehicle_id": VEHICLE_ID,
+            "driver_id": str(DRIVER_ID),
+            # "vehicle_id": VEHICLE_ID,
             "date": date
         })
         # Nếu điểm danh không có (404), thực hiện thêm điểm danh mới
         if response.status_code == 404:
             print("Không tìm thấy điểm danh, thêm mới.")
-            add_attendance(DRIVER_ID, VEHICLE_ID, date)
+            add_attendance(DRIVER_ID)
         elif response.status_code == 200:
             # Nếu điểm danh đã có, cập nhật thời gian checkout
             attendance = response.json()
             print("Điểm danh đã có, cập nhật checkout_time.")
-            update_attendance(attendance['attendance_id'], DRIVER_ID, VEHICLE_ID, attendance['checkin_time'], datetime.now().time().isoformat(), attendance['note'])
+            update_attendance(
+                attendance['attendance_id'],
+                DRIVER_ID,
+                attendance['checkin_time'],
+                datetime.now().time().isoformat(),
+                attendance['folder_path'])
         else:
             print(f"Lỗi khi gọi API điểm danh: {response.status_code}, {response.text}")
         
@@ -377,9 +437,9 @@ def start_scheduler():
     # TẠO LỊCH GỌI ĐỊNH KỲ
     save_infor()
     scheduler = BackgroundScheduler()
-    scheduler.add_job(save_infor, 'interval', minutes = 2)  # Gọi hàm mỗi 5 giây
+    scheduler.add_job(save_infor, 'interval', minutes = 1)
     scheduler.add_job(func=reset_attendance_id, trigger="cron", hour=0, minute=0)
-    scheduler.add_job(func=location_update, trigger="interval", seconds=10)
+    scheduler.add_job(func=location_update, trigger="interval", minutes=1)
 
     scheduler.start()
     print("Scheduler started.")

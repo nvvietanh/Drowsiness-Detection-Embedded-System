@@ -8,54 +8,37 @@ const AttendanceDetailTable = () => {
   const [error, setError] = useState(null);
   const location = useLocation();
 
-  // Hàm chuyển đổi URL hình ảnh thành base64
-  const fetchBase64Image = async (url) => {
-    try {
-      const response = await fetch(url);
-      const blob = await response.blob();
-      return new Promise((resolve) => {
-        const reader = new FileReader();
-        reader.onloadend = () => resolve(reader.result);
-        reader.readAsDataURL(blob);
-      });
-    } catch (error) {
-      console.error('Error fetching image:', error);
-      return '';
-    }
-  };
-
-  // Lấy dữ liệu từ API khi component mount
   useEffect(() => {
-    const fetchAttendances = async () => {
+    const fetchImages = async () => {
       try {
-        const { driver_id, vehicle_id, date } = location.state || {};
-        if (!driver_id || !vehicle_id || !date) {
+        const { driver_id, date, folder_path } = location.state || {};
+        if (!driver_id || !date || !folder_path) {
           throw new Error('Missing required parameters');
         }
 
-        const response = await fetch(`${process.env.REACT_APP_API_URL}/attendances`);
-        if (!response.ok) throw new Error('Failed to fetch attendances');
+        // Gọi API /get_images_by_path với folder_path
+        const response = await fetch('http://26.162.56.36:5000/get_images_by_path', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+          body: new URLSearchParams({
+            image_folder: folder_path
+          })
+        });
+
+        if (!response.ok) throw new Error('Failed to fetch images');
         const data = await response.json();
 
-        // Lọc dữ liệu dựa trên driver_id, vehicle_id và date
-        const filteredData = data.filter(
-          (attendance) =>
-            attendance.driver_id === driver_id &&
-            attendance.vehicle_id === vehicle_id &&
-            attendance.date === date
-        );
+        // Tạo dữ liệu hiển thị với driver_id và date từ state
+        const formattedData = data.map(item => ({
+          driver_id,
+          date,
+          time: item.time,
+          image_base64: `data:image/jpeg;base64,${item.image_base64}`
+        }));
 
-        // Lấy base64 cho tất cả hình ảnh của driver states
-        const statesWithBase64 = await Promise.all(
-          filteredData.map(async (state) => {
-            if (state.image_url) {
-              const base64 = await fetchBase64Image(state.image_url);
-              return { ...state, image_base64: base64 };
-            }
-            return state;
-          })
-        );
-        setAttendances(statesWithBase64);
+        setAttendances(formattedData);
       } catch (err) {
         setAttendances([]);
         setError('Không có dữ liệu');
@@ -63,7 +46,7 @@ const AttendanceDetailTable = () => {
         setLoading(false);
       }
     };
-    fetchAttendances();
+    fetchImages();
   }, [location.state]);
 
   if (loading) return <div className="table-container">Đang tải...</div>;
@@ -76,7 +59,6 @@ const AttendanceDetailTable = () => {
           <thead>
             <tr>
               <th>Mã tài xế</th>
-              <th>Mã xe</th>
               <th>Ngày</th>
               <th>Thời gian</th>
               <th>Hình ảnh</th>
@@ -85,7 +67,7 @@ const AttendanceDetailTable = () => {
           <tbody>
             {attendances.length === 0 && error ? (
               <tr>
-                <td colSpan="5" style={{ textAlign: 'center', padding: '20px' }}>
+                <td colSpan="4" style={{ textAlign: 'center', padding: '20px' }}>
                   {error}
                 </td>
               </tr>
@@ -93,9 +75,8 @@ const AttendanceDetailTable = () => {
               attendances.map((attendance, index) => (
                 <tr key={index}>
                   <td>{attendance.driver_id}</td>
-                  <td>{attendance.vehicle_id}</td>
                   <td>{attendance.date}</td>
-                  <td>{attendance.time || `${attendance.checkin_time} - ${attendance.checkout_time}`}</td>
+                  <td>{attendance.time}</td>
                   <td>
                     {attendance.image_base64 ? (
                       <img

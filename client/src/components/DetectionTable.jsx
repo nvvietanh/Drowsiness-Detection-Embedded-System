@@ -41,7 +41,7 @@ const DetectionTable = ({ setCurrentView }) => {
       {
         vehicle_id: 1,
         license_plate: "29A-123.45",
-        vehicle_ip: "http://26.254.107.153:5000"
+        vehicle_ip: `http://26.254.107.153:5000`
       },
       {
         vehicle_id: 2,
